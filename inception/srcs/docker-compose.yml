@@ -1,0 +1,72 @@
+version: "3.5"
+
+services:
+ mariadb:
+  image: mariadb:sbelabba
+  hostname: mariadb
+  container_name: mariadb
+  build:
+   context: requirements/mariadb
+  restart: unless-stopped
+  volumes:
+   - db_data:/var/lib/mysql
+  env_file: 
+   - ./.env
+  networks:
+   - inception_network
+
+
+
+ nginx:
+  image: nginx:sbelabba
+  hostname: nginx
+  container_name: nginx
+  depends_on:
+  - wordpress
+  build:
+   context: requirements/nginx
+  restart: on-failure
+  ports:
+   - "443:443"
+  volumes:
+   - wp_data:/var/www/wordpress
+  networks:
+   - inception_network
+
+ wordpress:
+  image: wordpress:sbelabba
+  hostname: wordpress
+  container_name: wordpress
+  depends_on:
+  - mariadb
+  build:
+   context: requirements/wordpress
+  env_file: 
+   - ./.env
+  restart: on-failure
+  volumes:
+   - wp_data:/var/www/wordpress
+  networks:
+   - inception_network
+
+volumes:
+ wp_data:
+  driver: local
+  name: WordPress
+  driver_opts:
+   type: none
+   o: bind
+   device: /home/sbelabba/data/wordpress
+
+ db_data:
+  driver: local
+  name: MariaDB
+  driver_opts:
+   type: none
+   o: bind
+   device: /home/sbelabba/data/mariadb
+
+networks:
+  inception_network:
+   name: inception_network
+   driver: bridge
